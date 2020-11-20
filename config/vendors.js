@@ -10,7 +10,8 @@ module.exports = {
 
     javascripts: [
         'node_modules/jquery/dist/jquery.js',
-        'node_modules/swiper/dist/js/swiper.jquery.umd.js'
+        'node_modules/swiper/dist/js/swiper.jquery.umd.js',
+        'app/src/javascripts/page.js',
     ],
 
     fonts: [

@@ -1,3 +1,8 @@
+/**
+ * @author Lowkey
+ * @date 2020/01/07 10:11:50
+ * @Description: gulp低版本与高版本nodeJs不兼容，需升级Glup到4.0 配置文件需修改，安装gulp4-run-sequence
+ */
 'use strict';
 
 var autoprefixer = require('gulp-autoprefixer');
@@ -11,14 +16,13 @@ var inject = require('gulp-inject');
 var minifycss = require('gulp-minify-css');
 var notify = require('gulp-notify');
 var rename = require('gulp-rename');
-var runSequence = require('run-sequence');
+var runSequence = require('gulp4-run-sequence');
 var sass = require('gulp-sass');
 var streamSeries = require('stream-series');
 var plumber = require('gulp-plumber');
 var uglify = require('gulp-uglify');
 
 var vendors = require('./config/vendors');
-
 
 
 /* ============================================================================================================
@@ -95,7 +99,7 @@ gulp.task('publish-js', function () {
                 transform: ['partialify'],
                 debug: true
             }))
-        )
+    )
         .pipe(concat('bundle.js'))
         .pipe(gulp.dest('app/dist/javascripts'));
 });
@@ -103,19 +107,18 @@ gulp.task('publish-js', function () {
 // inject app/dist/stylesheets/bundle.css and app/dist/javascripts/bundle.js into app/src/index.html
 // and save as app/dist/index.html
 gulp.task('inject', function () {
-    var target = gulp.src('app/src/index.html');
+    var target = gulp.src(['app/src/index.html', 'app/src/page.html']);
     var assets = gulp.src([
         'app/dist/stylesheets/bundle.css',
         'app/dist/javascripts/bundle.js'
     ], {
         read: false
     });
-    return target
-        .pipe(inject(assets, {
-            ignorePath: 'app/dist/',
-            addRootSlash: false,
-            removeTags: true
-        }))
+    return target.pipe(inject(assets, {
+        ignorePath: 'app/dist/',
+        addRootSlash: false,
+        removeTags: true
+    }))
         .pipe(gulp.dest('app/dist'));
 });
 
@@ -127,12 +130,12 @@ gulp.task('watch', function () {
         }
     });
 
-    gulp.watch('app/src/index.html', ['inject']);
-    gulp.watch('app/src/scss/**/*.scss', ['publish-css']);
-    gulp.watch('app/src/javascripts/**/*', ['publish-js']);
-    gulp.watch('app/src/fonts/**/*', ['publish-fonts']);
-    gulp.watch('app/src/images/**/*', ['publish-images']);
-    gulp.watch('app/src/audios/**/*', ['publish-audios']);
+    gulp.watch('app/src/index.html', gulp.series('inject'));
+    gulp.watch('app/src/scss/**/*.scss', gulp.series('publish-css'));
+    gulp.watch('app/src/javascripts/**/*', gulp.series('publish-js'));
+    gulp.watch('app/src/fonts/**/*', gulp.series('publish-fonts'));
+    gulp.watch('app/src/images/**/*', gulp.series('publish-images'));
+    gulp.watch('app/src/audios/**/*', gulp.series('publish-audios'));
 
     gulp.watch('app/dist/index.html').on('change', browserSync.reload);
     gulp.watch('app/dist/javascripts/*').on('change', browserSync.reload);
@@ -141,7 +144,7 @@ gulp.task('watch', function () {
 });
 
 // delete files under app/dist
-gulp.task('clean-files', function(cb) {
+gulp.task('clean-files', function (cb) {
     return del([
         'app/dist/**/*'
     ], cb);
@@ -158,8 +161,7 @@ gulp.task('dev', function (cb) {
 });
 
 // default task
-gulp.task('default', ['dev']);
-
+gulp.task('default', gulp.series('dev'));
 
 
 /* ============================================================================================================
@@ -189,7 +191,7 @@ gulp.task('uglify-js', function () {
 // inject app/dist/stylesheets/bundle.min.css and app/dist/javascripts/bundle.min.js into app/src/index.html
 // and save as app/dist/index.html
 gulp.task('inject-min', function () {
-    var target = gulp.src('app/src/index.html');
+    var target = gulp.src(['app/src/index.html', 'app/src/page.html']);
     var assets = gulp.src([
         'app/dist/stylesheets/bundle.min.css',
         'app/dist/javascripts/bundle.min.js'
@@ -216,10 +218,9 @@ gulp.task('del-bundle', function (cb) {
 // run 'minify-css' and 'uglify-js' at the same time
 // inject the minified files to index.html
 // delete unminified files
-gulp.task('prod',  function (cb) {
+gulp.task('prod', function (cb) {
     runSequence(['minify-css', 'uglify-js'], ['inject-min', 'del-bundle'], cb);
 });
-
 
 
 /* ===============================================
@@ -227,7 +228,7 @@ gulp.task('prod',  function (cb) {
  ================================================*/
 
 // handle errors
-function errorAlert(error){
+function errorAlert(error) {
     notify.onError({
         title: "Error in plugin '" + error.plugin + "'",
         message: 'Check your terminal',
